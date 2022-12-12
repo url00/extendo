@@ -88,21 +88,36 @@ export function activate(context: vscode.ExtensionContext) {
 
 				// todo handle we already have a selection case
 				const caretPosition = getCaretPosition(editor);
+				const caretPositionRelativeToText = doc.offsetAt(caretPosition) - doc.offsetAt(range.start)
 
-				const beforeCaret = text.substring(doc.offsetAt(range.start), doc.offsetAt(caretPosition) - doc.offsetAt(range.start));
-				const afterCaret = text.substring(doc.offsetAt(caretPosition) - doc.offsetAt(range.start));
+
+				const beforeCaret = text.substring(doc.offsetAt(range.start), caretPositionRelativeToText);
+				const afterCaret = text.substring(caretPositionRelativeToText);
 
 				// Check if we are in a key.
+				const keyEx = /^\w+(?!;)=/;
+				const isKey = afterCaret.match(keyEx);
+				if (isKey && isKey.index) {
+					const __allText = doc.getText();
+
+					const indexOfMatch = isKey.index;
+					const newStart = doc.positionAt(caretPositionRelativeToText);
+					const __newStartPart = __allText.substring(caretPositionRelativeToText);
+
+					const newEnd = doc.positionAt(caretPositionRelativeToText + indexOfMatch);
+					const __newEndPart = __allText.substring(caretPositionRelativeToText + indexOfMatch);
+
+
+					editor.selection = new vscode.Selection(newStart, newEnd);
+					wasHandled = true;
+				}
+				
 
 				// Check if we are in a value.
+				const isValue = afterCaret.match(/^\w+(?!=);/);
 
 				// Check if we are wanting to expand to a key-value.
 
-				const start = doc.positionAt(0);
-				const end = doc.positionAt(100);
-				editor.selection = new vscode.Selection(start, end);
-	
-				wasHandled = true;
 			}
 			
 
@@ -116,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (!wasHandled) {
 			// Fallback to internal selection expand.
-			vscode.commands.executeCommand("expandSelection");
+			vscode.commands.executeCommand("editor.action.smartSelect.expand");
 		}
 	});
 
