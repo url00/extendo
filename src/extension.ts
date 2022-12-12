@@ -39,7 +39,6 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extendo.doExtendo', () => {
 		let wasHandled = false;
 
-		console.log('Trying to get active editor.');
 		const editor = vscode.window.activeTextEditor;
 		const doc = editor?.document;
 		if (!doc) {
@@ -52,33 +51,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const [text, range] = getTextNearCaret(editor, doc);
 
+
+
 			// Search around from the caret position to see if this is likely a connection string.
 			let connectionStringChance = 0;
-
-			const connectionStringKeyValueDelimRegex =  /(=|;)/g;
-			const delimResult = text.matchAll(connectionStringKeyValueDelimRegex);
-			let equalCount = 0;
-			let semiCount = 0;
-			if (delimResult) {
-				for (let item of delimResult) {
-					if (!item.groups) continue;
-
-					if (item.groups[0] === "=") {
-						equalCount++;
-						continue;
-					}
-
-					if (item.groups[0] === ";") {
-						semiCount++;
-						continue;
-					}
-				}
+			if (text.match(/^\s*"?\w+"?:/m)) {
+				connectionStringChance += 0.1;
 			}
+			const delimiterMatches = text.match(/=|;/g);
+			connectionStringChance += delimiterMatches ? delimiterMatches.length > 0 ? 0.7 : 0 : 0;
 
-			// todo more analysis
-			if (equalCount == semiCount) {
-				connectionStringChance = 1;
-			}
 
 
 			if (connectionStringChance > 0.5) {
