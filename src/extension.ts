@@ -97,15 +97,22 @@ export function activate(context: vscode.ExtensionContext) {
 				// Check if we are in a key.
 				const keyEx = /^\w+(?!;)=/;
 				const isKey = afterCaret.match(keyEx);
-				if (isKey && isKey.index) {
+				if (isKey && isKey.index != undefined) {
 					const __allText = doc.getText();
 
 					const indexOfMatch = isKey.index;
-					const newStart = doc.positionAt(caretPositionRelativeToText);
-					const __newStartPart = __allText.substring(caretPositionRelativeToText);
 
-					const newEnd = doc.positionAt(caretPositionRelativeToText + indexOfMatch);
-					const __newEndPart = __allText.substring(caretPositionRelativeToText + indexOfMatch);
+					let newStartRelativeToText = caretPositionRelativeToText;
+					const possiblePartOfKeyBeforeCaret = beforeCaret.split('').reverse().join('').match(/(\w+)\W/);
+					if (possiblePartOfKeyBeforeCaret && possiblePartOfKeyBeforeCaret[1]) {
+						newStartRelativeToText -= possiblePartOfKeyBeforeCaret[1].length;
+					}
+					
+					let newStart = doc.positionAt(newStartRelativeToText);
+					const __newStartPart = __allText.substring(newStartRelativeToText);
+
+					const newEnd = doc.positionAt(caretPositionRelativeToText + indexOfMatch + isKey[0].length - 1);
+					const __newEndPart = __allText.substring(caretPositionRelativeToText + indexOfMatch + isKey[0].length - 1);
 
 
 					editor.selection = new vscode.Selection(newStart, newEnd);
