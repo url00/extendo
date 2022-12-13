@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getCaretPosition, getTextNearCaret } from "./helpers";
+import { getCaretPosition, getTextNearCaret, selectToDelimiters } from "./helpers";
 
 
 
@@ -44,36 +44,23 @@ export function tryHandleSqlServerConnectionString(editor: vscode.TextEditor, do
 	const caretPositionRelativeToText = doc.offsetAt(caretPosition) - doc.offsetAt(range.start);
 
 
-	const beforeCaret = text.substring(doc.offsetAt(range.start), caretPositionRelativeToText);
-	const afterCaret = text.substring(caretPositionRelativeToText);
-
 	// Check if we are in a key.
-	const keyEx = /^\w+(?!;)=/;
-	const isKey = afterCaret.match(keyEx);
-	if (isKey && isKey.index != undefined) {
-
-		const indexOfMatch = isKey.index;
-
-		let newStartRelativeToText = caretPositionRelativeToText;
-		const possiblePartOfKeyBeforeCaret = beforeCaret.split('').reverse().join('').match(/(\w+)\W/);
-		if (possiblePartOfKeyBeforeCaret && possiblePartOfKeyBeforeCaret[1]) {
-			newStartRelativeToText -= possiblePartOfKeyBeforeCaret[1].length;
-		}
-
-		const newStart = doc.positionAt(newStartRelativeToText);
-		const newEnd = doc.positionAt(caretPositionRelativeToText + indexOfMatch + isKey[0].length - 1);
-
-		editor.selection = new vscode.Selection(newStart, newEnd);
+	const possibleKeySelection = selectToDelimiters(/^\w*(?!;)=/, "=".length, text, caretPositionRelativeToText, range, doc);
+	if (possibleKeySelection) {
+		editor.selection = possibleKeySelection;
 		return true;
 	}
 
-
 	// Check if we are in a value.
-	const isValue = afterCaret.match(/^\w+(?!=);/);
+	const possibleValueSelection = selectToDelimiters(/^\w*(?!=);/, ";".length, text, caretPositionRelativeToText, range, doc);
+	if (possibleValueSelection) {
+		editor.selection = possibleValueSelection;
+		return true;
+	}
 
 	// Check if we are wanting to expand to a key-value.
 
 
-	
+
 	return wasHandled;
 }

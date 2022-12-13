@@ -13,6 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let wasHandled = false;
 		wasHandled = tryHandleJson(editor, doc, wasHandled);
+		// todo add module to check if extents + 1 of selection are both non-word chars (assume they are delimiters) and extend selection to include them
 		if (!wasHandled) {
 			// Fallback to internal selection expand.
 			vscode.commands.executeCommand("editor.action.smartSelect.expand");
